@@ -1,0 +1,96 @@
+---
+title: "Dataprep_Stringency"
+author: "Anne Margit"
+date: "4/28/2021"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, results = "hide"}
+library(dplyr)
+library(tidyr)
+library(anytime)
+library(arsenal)
+library(reshape2)
+library(knitr)
+```
+
+```{r, echo=T , message=F}
+load("data_long.Rdata")
+oxforddata <- read.csv("OxCGRT_latest.csv", header=TRUE)
+```
+
+Check which country names are different in the datasets:
+```{r, echo= T}
+data_long$coded_country <- as.factor(data_long$coded_country)
+oxforddata$CountryName <- as.factor(oxforddata$CountryName)
+
+levels1 <- levels(data_long$coded_country)
+levels2 <- levels(oxforddata$CountryName)
+
+levels1<- as.data.frame(levels1)
+levels2<- as.data.frame(levels2)
+
+levels1$levels1 <-as.character(levels1$levels1)
+levels2$levels2 <-as.character(levels2$levels2)
+
+check <- comparedf(levels1, levels2, by.x="levels1", by.y="levels2")
+summary(check)
+```
+
+Rename countries
+```{r, echo= T, results='hide'}
+data_long$coded_country <- 
+  plyr::revalue(data_long$coded_country , c("Hong Kong S.A.R."="Hong Kong", 
+                                       "Kyrgyzstan" = "Kyrgyz Republic",
+                                       "United Republic of Tanzania" = "Tanzania", 
+                                       "United States of America" = "United States",
+                                       "Republic of Serbia" = "Serbia",
+                                       "Slovakia" = "Slovak Republic"))
+```
+
+Renaming and recoding variables:
+```{r, echo= T, results='hide'}
+data_long$age <- as.factor(data_long$age)
+names(data_long)[names(data_long) == "age"] <- "Age"
+names(data_long)[names(data_long) == "coded_country"] <- "Country"
+names(data_long)[names(data_long) == "X"] <- "ID"
+names(data_long)[names(data_long) == "RecordedDate"] <- "Date"
+names(data_long)[names(data_long) == "gender"] <- "Gender"
+names(data_long)[names(data_long) == "edu"] <- "Edu"
+names(oxforddata)[names(oxforddata) == "CountryName"] <- "Country"
+
+data_long$Country <- as.character(data_long$Country)
+data_long$Country[data_long$Country==""] <- NA
+data_long$Country <- as.factor(data_long$Country)
+
+oxforddata$Date <-anydate(oxforddata$Date)
+data_long$Date <- anydate(data_long$Date)
+
+```
+
+Select nation-wide data:
+```{r, echo= T, results='hide'}
+oxforddata <- oxforddata %>%
+filter(Jurisdiction == "NAT_TOTAL")
+```
+
+Drop not used variables:
+```{r, echo= T, results='hide'}
+stringency_data <- oxforddata %>% select(Date, Country, StringencyIndex, ConfirmedCases, ConfirmedDeaths)
+
+```
+
+Join
+```{r, echo= T, results='hide'}
+data_long_str <- left_join(data_long, stringency_data, by=c("Date", "Country"))
+```
+
+Save
+```{r, echo= T, results='hide'}
+save(data_long_str, file="data_long_str.Rdata")
+```
+
