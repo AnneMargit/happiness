@@ -47,9 +47,17 @@ dl <- dl %>% rename(id = ID,
                     leave_house = HouseLeave, 
                     stringency = StringencyIndex)
 
-dl <- dl %>% mutate(gender = gender - 1, 
-              neuroticism = (Neuro1 + Neuro2 + Neuro3)/3)
+dl <- dl %>% mutate(gender = gender - 1,
+                    neuroticism = (Neuro1 + Neuro2 + Neuro3)/3,
+                    job_parttime = ifelse(!is.na(Emp1) == TRUE, 1, 0),
+                    job_parttime = ifelse(!is.na(Emp2) == TRUE, 1, job_parttime), 
+                    job_fulltime = ifelse(!is.na(Emp3) == TRUE, 1, 0),
+                    job_parttime = ifelse(job_fulltime == 1, 0, job_parttime),
+                    know_corona = ifelse(!is.na(CoronaClose6) == TRUE, 0, 1))
+
+#dl %>% select(Emp1:Emp4, job_parttime, job_fulltime)
 ```
+
 ## Check missings
 ```{r}
 # check number of NA's
@@ -67,8 +75,8 @@ dl %>% filter(!is.na(happy)) %>% select(Wave) %>% table()
 ## Descriptives overall uncontrolled
 ```{r}
 dl %>% skim("id", "gender", "Age", "country", "happy", "friend_rl", "other_rl", 
-                                   "friend_online", "other_online", "rel_sat", "lonely", "ment_health", 
-                                   "phys_health", "leave_house", "neuroticism", "stringency")
+                                   "friend_online", "other_online", "rel_sat", "lonely", "ment_health", "PFS", 
+                                   "phys_health", "leave_house", "neuroticism", "stringency", "know_corona", "ISO_Obj")
 ```
 ```{r}
 dl %>% group_by(country) %>% select(Date) %>% table()
@@ -77,15 +85,36 @@ dl %>% group_by(country) %>% select(country) %>% count()
 dl %>% group_by(country) %>% filter(country != 0) %>% select(country) %>% table()
 ```
 
+```{r}
+#parttime job
+dl %>% select(job_parttime) %>% table()
+
+dl %>% group_by(id) %>% select(job_parttime)  
+dl %>% group_by(id) %>% filter(job_parttime > 0 & job_parttime < 1)  
+
+
+# fulltime job
+dl %>% select(job_fulltime) %>% table()
+
+dl %>% group_by(id) %>% select(job_fulltime)   
+
+#physical health
+
+#know corona
+dl %>% group_by(id) %>% select(know_corona)  
+```
+
+
 ## Aggregate data
 ```{r}
-df_id <- aggreg(dl, id, vars=c("id", "gender", "age", "country", "happy", "friend_rl", "other_rl", 
-                                   "friend_online", "other_online", "rel_sat", "lonely", "ment_health", 
-                                   "phys_health", "leave_house", "neuroticism")
+df_id <- aggreg(dl, id, vars=c("id", "gender", "Age", "Edu","country", "countryCitizen","Citizen", "job_fulltime", "job_parttime" ,"happy", "friend_rl", "other_rl", 
+                                   "friend_online", "other_online", "rel_sat", "lonely", "ment_health", "PFS",
+                                   "phys_health", "leave_house", "neuroticism", "know_corona")
                   )
  
 df_id %>% skim()
 ```
+
 ```{r}
 df_id %>% group_by(country) %>% filter(country != 0) %>% select(country) %>% table()
 ```
