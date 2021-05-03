@@ -1,0 +1,111 @@
+---
+title: "Descriptives"
+author: "Vera"
+date: "28-4-2021"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+## Load packages
+```{r}
+library(skimr)
+library(tidyverse)
+library(readr)
+
+#remotes::install_github("wviechtb/esmpack")
+library(esmpack)
+```
+
+## Load data
+```{r}
+load("data_long_str.Rdata")
+
+# Save data in long format as dl
+dl <- data_long_str
+```
+
+## Rename variables
+```{r}
+dl <- dl %>% rename(id = ID, 
+                    gender = Gender,
+                    country = Country,
+                    friend_rl = ISO_Friends_inperson, 
+                    other_rl = ISO_OthPpl_inperson,
+                    friend_online = ISO_Friends_online, 
+                    other_online = ISO_OthPpl_online, 
+                    rel_sat = RelSat, 
+                    lonely = Lonely, 
+                    ment_health = MentHealth, 
+                    phys_health = PhysHealth, 
+                    happy = Happy, 
+                    leave_house = HouseLeave, 
+                    stringency = StringencyIndex)
+
+dl <- dl %>% mutate(gender = gender - 1, 
+              neuroticism = (Neuro1 + Neuro2 + Neuro3)/3)
+```
+## Check missings
+```{r}
+# check number of NA's
+dl  %>% filter(!is.na(Date))
+
+## select only rows with Recorded date
+dl <- dl  %>% filter(!is.na(Date))
+
+# check number of responses per wave
+dl %>% filter(!is.na(Date)) %>% select(Wave) %>% table()
+
+# check number of responses for happiness per wave
+dl %>% filter(!is.na(happy)) %>% select(Wave) %>% table()
+```
+## Descriptives overall uncontrolled
+```{r}
+dl %>% skim("id", "gender", "Age", "country", "happy", "friend_rl", "other_rl", 
+                                   "friend_online", "other_online", "rel_sat", "lonely", "ment_health", 
+                                   "phys_health", "leave_house", "neuroticism", "stringency")
+```
+```{r}
+dl %>% group_by(country) %>% select(Date) %>% table()
+
+dl %>% group_by(country) %>% select(country) %>% count()
+dl %>% group_by(country) %>% filter(country != 0) %>% select(country) %>% table()
+```
+
+## Aggregate data
+```{r}
+df_id <- aggreg(dl, id, vars=c("id", "gender", "age", "country", "happy", "friend_rl", "other_rl", 
+                                   "friend_online", "other_online", "rel_sat", "lonely", "ment_health", 
+                                   "phys_health", "leave_house", "neuroticism")
+                  )
+ 
+df_id %>% skim()
+```
+```{r}
+df_id %>% group_by(country) %>% filter(country != 0) %>% select(country) %>% table()
+```
+
+
+## Data
+```{r}
+dl %>% select(coded_country) %>% table()
+dl %>% group_by(id) %>% select(Emp1:Emp14) %>% skim()
+
+```
+
+
+
+
+```{r pressure, echo=FALSE}
+
+df %>% skim()
+
+df %>% 
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

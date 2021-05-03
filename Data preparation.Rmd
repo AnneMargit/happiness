@@ -1,0 +1,116 @@
+---
+title: "Data preparation"
+author: "Vera"
+date: "28-4-2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+
+## Load data
+```{r, include=FALSE}
+library(readr)
+dw <- read_csv("C:/Users/vera_/Documents/PhD RUG/Happiness trajectories COVID/PsyCorona Happiness/RMD05_Anne Margit Reitsema_2021-04-25 23-15 CEST.csv")
+```
+
+## Respondents per wave
+```{r}
+library(tidyverse)
+library(skimr)
+
+dw %>% select(StartDate:w20_StartDate) %>% skim()
+
+dw %>% filter(!is.na(StartDate)) %>% select(StartDate:w20_StartDate) %>% skim()
+```
+```{r}
+dw <- dw %>% mutate(id = X1,
+              w1_missing = ifelse(is.na(w1_StartDate) == TRUE, 1, 0),
+              w2_missing = ifelse(is.na(w2_StartDate) == TRUE, 1, 0),
+              w3_missing = ifelse(is.na(w3_StartDate) == TRUE, 1, 0),
+              w4_missing = ifelse(is.na(w4_StartDate) == TRUE, 1, 0),
+              w5_missing = ifelse(is.na(w5_StartDate) == TRUE, 1, 0),
+              w6_missing = ifelse(is.na(w6_StartDate) == TRUE, 1, 0),
+              w7_missing = ifelse(is.na(w7_StartDate) == TRUE, 1, 0),
+              w8_missing = ifelse(is.na(w8_StartDate) == TRUE, 1, 0),
+              w9_missing = ifelse(is.na(w9_StartDate) == TRUE, 1, 0),
+              w10_missing = ifelse(is.na(w10_StartDate) == TRUE, 1, 0),
+              w11_missing = ifelse(is.na(w11_StartDate) == TRUE, 1, 0),
+              w12_missing = ifelse(is.na(w12_StartDate) == TRUE, 1, 0),
+              w13_missing = ifelse(is.na(w13_StartDate) == TRUE, 1, 0),
+              w14_missing = ifelse(is.na(w14_StartDate) == TRUE, 1, 0),
+              w15_missing = ifelse(is.na(w15_StartDate) == TRUE, 1, 0),
+              w16_missing = ifelse(is.na(w16_StartDate) == TRUE, 1, 0),
+              w17_missing = ifelse(is.na(w17_StartDate) == TRUE, 1, 0),
+              w18_missing = ifelse(is.na(w18_StartDate) == TRUE, 1, 0),
+              w19_missing = ifelse(is.na(w19_StartDate) == TRUE, 1, 0),
+              w20_missing = ifelse(is.na(w19_StartDate) == TRUE, 1, 0)
+              ) 
+
+#dw %>% select(w1_missing:w20_missing) %>% skim()
+
+dw <- dw %>% mutate(missings = w1_missing + w2_missing + w3_missing + w4_missing + w5_missing +
+                w6_missing + w7_missing + w8_missing + w9_missing + w10_missing +
+                w11_missing + w12_missing + w13_missing + w14_missing + w15_missing +
+                w16_missing + w17_missing + w18_missing + w19_missing + w20_missing) 
+
+dw %>% select(missings) %>% table()
+```
+
+
+```{r}
+dw %>% filter(missings < 20) %>% select(missings) %>% count()
+dw %>% filter(missings < 19) %>% select(missings) %>% count()
+dw %>% filter(missings < 18) %>% select(missings) %>% count()
+dw %>% filter(missings < 17) %>% select(missings) %>% count()
+dw %>% filter(missings < 16) %>% select(missings) %>% count()
+dw %>% filter(missings < 15) %>% select(missings) %>% count()
+dw %>% filter(missings < 14) %>% select(missings) %>% count()
+dw %>% filter(missings < 13) %>% select(missings) %>% count()
+dw %>% filter(missings < 12) %>% select(missings) %>% count()
+dw %>% filter(missings < 11) %>% select(missings) %>% count()
+dw %>% filter(missings < 10) %>% select(missings) %>% count()
+dw %>% filter(missings < 9) %>% select(missings) %>% count()
+dw %>% filter(missings < 8) %>% select(missings) %>% count()
+dw %>% filter(missings < 7) %>% select(missings) %>% count()
+dw %>% filter(missings < 6) %>% select(missings) %>% count()
+dw %>% filter(missings < 5) %>% select(missings) %>% count()
+dw %>% filter(missings < 4) %>% select(missings) %>% count()
+dw %>% filter(missings < 3) %>% select(missings) %>% count()
+dw %>% filter(missings < 2) %>% select(missings) %>% count()
+```
+
+```{r}
+dw <- dw %>% filter(missings != 20)
+
+dw %>% select(missings) %>% table()
+dw %>% count()
+```
+
+## Mutate variables
+```{r}
+#dw %>% select(employstatus_1) %>% table()
+dw %>% select(PFS01) %>% table()
+dw %>% select(isoFriends_inPerson) %>% table()
+dw %>% select(isoOthPpl_inPerson) %>% table()
+dw %>% select(isoFriends_online) %>% table()
+dw %>% select(isoOthPpl_online) %>% table()
+dw %>% select(persRelSat) %>% table()
+dw %>% select(lone01) %>% table()
+dw %>% select(happy) %>% table()
+dw %>% select(coronaClose_1) %>% table()
+dw %>% select(houseLeave) %>% table()
+dw %>% select(neuro01) %>% table()
+
+dw %>% select(countryCitizen:representative) %>% skim()
+dw %>% select(respSetMean, respSetSd) %>% skim()
+
+dw %>% select(ConfirmedCases:StringencyIndex) %>% skim()
+```
+
