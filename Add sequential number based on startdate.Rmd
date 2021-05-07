@@ -1,0 +1,92 @@
+---
+title: "Add sequential number based on startdate"
+author: "Anne Margit"
+date: "5/7/2021"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, results = "hide"}
+library(dplyr)
+library(tidyr)
+library(anytime)
+library(arsenal)
+library(readr)
+```
+
+```{r read data, results = "hide"}
+load("data_long_str.Rdata")
+dl <- data_long_str
+```
+
+## Rename variables
+```{r}
+dl <- dl %>% rename(id = ID, 
+                    gender = Gender,
+                    country = Country,
+                    friend_rl = ISO_Friends_inperson, 
+                    other_rl = ISO_OthPpl_inperson,
+                    friend_online = ISO_Friends_online, 
+                    other_online = ISO_OthPpl_online, 
+                    rel_sat = RelSat, 
+                    lonely = Lonely, 
+                    ment_health = MentHealth, 
+                    phys_health = PhysHealth, 
+                    happy = Happy, 
+                    leave_house = HouseLeave, 
+                    stringency = StringencyIndex)
+
+dl <- dl %>% mutate(gender = gender - 1,
+                    neuroticism = (Neuro1 + Neuro2 + Neuro3)/3,
+                    job_parttime = ifelse(!is.na(Emp1) == TRUE, 1, 0),
+                    job_parttime = ifelse(!is.na(Emp2) == TRUE, 1, job_parttime), 
+                    job_fulltime = ifelse(!is.na(Emp3) == TRUE, 1, 0),
+                    job_parttime = ifelse(job_fulltime == 1, 0, job_parttime),
+                    know_corona = ifelse(!is.na(CoronaClose6) == TRUE, 0, 1))
+
+#dl %>% select(Emp1:Emp4, job_parttime, job_fulltime)
+```
+
+## select only rows with Recorded date
+```{r}
+dl <- dl  %>% filter(!is.na(Date))
+```
+
+## First date
+```{r}
+min(dl$Date)
+```
+
+## Add difference in days between current date and 2020-03-19
+```{r}
+mindate <- as.Date("2020-03-19")
+
+dl2 <- dl %>%
+  arrange(Date)%>%
+  mutate(days = difftime(Date, mindate, units="days"))
+
+dl <- dl2
+```
+
+## Rename some variables
+liv_alone is now coded 1 for living with someone
+```{r}
+dl <- dl %>% rename(liv_sit = ISO_Obj,
+                    liv_spouse = ISO_Obj_who1,
+                    liv_mother = ISO_Obj_who2,
+                    liv_father = ISO_Obj_who3,
+                    liv_child = ISO_Obj_who4,
+                    liv_house = ISO_Obj_who5,
+                    liv_other = ISO_Obj_who6)
+
+dl$liv_sit[dl$liv_sit == "1"] <- "0"
+dl$liv_sit[dl$liv_sit == "2"] <- "1"
+```
+
+
+```{r}
+save(dl, file= "dl.Rdata")
+```
