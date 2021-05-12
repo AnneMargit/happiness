@@ -1,10 +1,9 @@
 ---
-title: "Data preparation"
-author: "Vera"
-date: "28-4-2021"
+title: "Descriptives"
+author: "Anne Margit & Vera"
+date: "12-5-2021"
 output: html_document
 ---
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -13,104 +12,321 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
+## Load packages
+```{r}
+library(skimr)
+library(tidyverse)
+library(readr)
+
+#remotes::install_github("wviechtb/esmpack")
+library(esmpack)
+
+library(dplyr)
+library(tidyr)
+library(anytime)
+library(arsenal)
+```
 
 ## Load data
-```{r, include=FALSE}
-library(readr)
-dw <- read_csv("C:/Users/vera_/Documents/PhD RUG/Happiness trajectories COVID/PsyCorona Happiness/RMD05_Anne Margit Reitsema_2021-04-25 23-15 CEST.csv")
+```{r}
+load("data_long_str.Rdata")
+
+# Save data in long format as dl
+dl <- data_long_str
 ```
 
-## Respondents per wave
+## Rename variables
 ```{r}
-library(tidyverse)
-library(skimr)
-
-dw %>% select(StartDate:w20_StartDate) %>% skim()
-
-dw %>% filter(!is.na(StartDate)) %>% select(StartDate:w20_StartDate) %>% skim()
+dl <- dl %>% rename(id = ID, 
+                    wave = Wave,
+                    gender = Gender,
+                    country = Country,
+                    friend_rl = ISO_Friends_inperson, 
+                    other_rl = ISO_OthPpl_inperson,
+                    friend_online = ISO_Friends_online, 
+                    other_online = ISO_OthPpl_online, 
+                    rel_sat = RelSat, 
+                    lonely = Lonely, 
+                    ment_health = MentHealth, 
+                    phys_health = PhysHealth, 
+                    happy = Happy, 
+                    leave_house = HouseLeave, 
+                    stringency = StringencyIndex)
 ```
+
 ```{r}
-dw <- dw %>% mutate(id = X1,
-              w1_missing = ifelse(is.na(w1_StartDate) == TRUE, 1, 0),
-              w2_missing = ifelse(is.na(w2_StartDate) == TRUE, 1, 0),
-              w3_missing = ifelse(is.na(w3_StartDate) == TRUE, 1, 0),
-              w4_missing = ifelse(is.na(w4_StartDate) == TRUE, 1, 0),
-              w5_missing = ifelse(is.na(w5_StartDate) == TRUE, 1, 0),
-              w6_missing = ifelse(is.na(w6_StartDate) == TRUE, 1, 0),
-              w7_missing = ifelse(is.na(w7_StartDate) == TRUE, 1, 0),
-              w8_missing = ifelse(is.na(w8_StartDate) == TRUE, 1, 0),
-              w9_missing = ifelse(is.na(w9_StartDate) == TRUE, 1, 0),
-              w10_missing = ifelse(is.na(w10_StartDate) == TRUE, 1, 0),
-              w11_missing = ifelse(is.na(w11_StartDate) == TRUE, 1, 0),
-              w12_missing = ifelse(is.na(w12_StartDate) == TRUE, 1, 0),
-              w13_missing = ifelse(is.na(w13_StartDate) == TRUE, 1, 0),
-              w14_missing = ifelse(is.na(w14_StartDate) == TRUE, 1, 0),
-              w15_missing = ifelse(is.na(w15_StartDate) == TRUE, 1, 0),
-              w16_missing = ifelse(is.na(w16_StartDate) == TRUE, 1, 0),
-              w17_missing = ifelse(is.na(w17_StartDate) == TRUE, 1, 0),
-              w18_missing = ifelse(is.na(w18_StartDate) == TRUE, 1, 0),
-              w19_missing = ifelse(is.na(w19_StartDate) == TRUE, 1, 0),
-              w20_missing = ifelse(is.na(w19_StartDate) == TRUE, 1, 0)
-              ) 
+dl <- dl %>% mutate(gender = gender - 1,
+                    neuroticism = (Neuro1 + Neuro2 + Neuro3)/3,
+                    job_24 = ifelse(!is.na(Emp1) == TRUE, 1, 0),
+                    job_39 = ifelse(!is.na(Emp2) == TRUE, 1, 0), 
+                    job_40 = ifelse(!is.na(Emp3) == TRUE, 1, 0),
+                    job_na = ifelse(is.na(Emp1) & is.na(Emp2) & is.na(Emp3) & is.na(Emp4) & is.na(Emp5) & is.na(Emp6) & is.na(Emp7) &
+                                    is.na(Emp8) & is.na(Emp9) & is.na(Emp10) & is.na(Emp11) & is.na(Emp12) & is.na(Emp13) & is.na(Emp14), 
+                                    1, 0),
+                    job_24 = ifelse(job_na == 1, NA, job_24),
+                    job_39 = ifelse(job_na == 1, NA, job_39), 
+                    job_40 = ifelse(job_na == 1, NA, job_40),
+                    know_corona = ifelse(!is.na(CoronaClose6) == TRUE, 0, 1))
 
-#dw %>% select(w1_missing:w20_missing) %>% skim()
-
-dw <- dw %>% mutate(missings = w1_missing + w2_missing + w3_missing + w4_missing + w5_missing +
-                w6_missing + w7_missing + w8_missing + w9_missing + w10_missing +
-                w11_missing + w12_missing + w13_missing + w14_missing + w15_missing +
-                w16_missing + w17_missing + w18_missing + w19_missing + w20_missing) 
-
-dw %>% select(missings) %>% table()
+dl %>% select(Emp1:Emp4, job_parttime, job_fulltime, job_24, job_39, job_40, job_na)
 ```
 
 
 ```{r}
-dw %>% filter(missings < 20) %>% select(missings) %>% count()
-dw %>% filter(missings < 19) %>% select(missings) %>% count()
-dw %>% filter(missings < 18) %>% select(missings) %>% count()
-dw %>% filter(missings < 17) %>% select(missings) %>% count()
-dw %>% filter(missings < 16) %>% select(missings) %>% count()
-dw %>% filter(missings < 15) %>% select(missings) %>% count()
-dw %>% filter(missings < 14) %>% select(missings) %>% count()
-dw %>% filter(missings < 13) %>% select(missings) %>% count()
-dw %>% filter(missings < 12) %>% select(missings) %>% count()
-dw %>% filter(missings < 11) %>% select(missings) %>% count()
-dw %>% filter(missings < 10) %>% select(missings) %>% count()
-dw %>% filter(missings < 9) %>% select(missings) %>% count()
-dw %>% filter(missings < 8) %>% select(missings) %>% count()
-dw %>% filter(missings < 7) %>% select(missings) %>% count()
-dw %>% filter(missings < 6) %>% select(missings) %>% count()
-dw %>% filter(missings < 5) %>% select(missings) %>% count()
-dw %>% filter(missings < 4) %>% select(missings) %>% count()
-dw %>% filter(missings < 3) %>% select(missings) %>% count()
-dw %>% filter(missings < 2) %>% select(missings) %>% count()
+dl <- dl %>% rename(liv_sit = ISO_Obj,
+                    liv_spouse = ISO_Obj_who1,
+                    liv_mother = ISO_Obj_who2,
+                    liv_father = ISO_Obj_who3,
+                    liv_child = ISO_Obj_who4,
+                    liv_house = ISO_Obj_who5,
+                    liv_other = ISO_Obj_who6)
+
+#liv_alone is now coded 1 for living with someone
+dl$liv_sit[dl$liv_sit == "1"] <- "0"
+dl$liv_sit[dl$liv_sit == "2"] <- "1"
+
+#create variables for living with parents and living with others
+dl <- dl %>% mutate(liv_parent = ifelse((liv_mother == 1) | (liv_father == 1), 1, 0))
+                    
+dl %>% filter(!is.na(liv_sit)) %>% select(liv_sit, liv_mother, liv_father, liv_parent, liv_child, liv_house, liv_other)
+```
+
+## Check missings
+```{r}
+# check number of NA's
+dl %>% filter(!is.na(Date))
+
+## select only rows with Recorded date
+dl <- dl %>% filter(!is.na(Date))
+
+# check number of responses per wave
+dl %>% filter(!is.na(Date)) %>% select(wave) %>% table()
+
+# check number of responses for happiness per wave
+dl %>% filter(!is.na(happy)) %>% select(wave) %>% table()
+```
+
+## First date
+```{r}
+min(dl$Date)
+```
+
+## Add difference in days between current date and 2020-03-19
+```{r}
+mindate <- as.Date("2020-03-19")
+
+dl <- dl %>%
+  arrange(Date)%>%
+  mutate(days = difftime(Date, mindate, units="days"))
+```
+
+## Dates per wave
+```{r}
+dl %>% filter(wave == "w0") %>% select(Date) %>% table()
+
+dl %>% filter(wave == "w1") %>% select(Date) %>% table()
+dl %>% filter(wave == "w2") %>% select(Date) %>% table()
+dl %>% filter(wave == "w3") %>% select(Date) %>% table()
+
+dl %>% filter(wave == "w4") %>% select(Date) %>% table()
+dl %>% filter(wave == "w5") %>% select(Date) %>% table()
+
+dl %>% filter(wave == "w6") %>% select(Date) %>% table()
+dl %>% filter(wave == "w7") %>% select(Date) %>% table()
+
+dl %>% filter(wave == "w8") %>% select(Date) %>% table()
+dl %>% filter(wave == "w9") %>% select(Date) %>% table()
+
+dl %>% filter(wave == "w10") %>% select(Date) %>% table()
+dl %>% filter(wave == "w11") %>% select(Date) %>% table()
+dl %>% filter(wave == "w12") %>% select(Date) %>% table()
+dl %>% filter(wave == "w13") %>% select(Date) %>% table()
+dl %>% filter(wave == "w14") %>% select(Date) %>% table()
+dl %>% filter(wave == "w15") %>% select(Date) %>% table()
+dl %>% filter(wave == "w16") %>% select(Date) %>% table()
+dl %>% filter(wave == "w17") %>% select(Date) %>% table()
+dl %>% filter(wave == "w18") %>% select(Date) %>% table()
+dl %>% filter(wave == "w19") %>% select(Date) %>% table()
+dl %>% filter(wave == "w20") %>% select(Date) %>% table()
+```
+
+## Descriptives overall uncontrolled
+```{r}
+dl %>% skim("id", "gender", "Age", "country", "happy", "friend_rl", "other_rl", 
+                                   "friend_online", "other_online", "rel_sat", "lonely", "ment_health", "PFS", 
+                                   "phys_health", "leave_house", "neuroticism", "stringency", "know_corona", "ISO_Obj")
+```
+```{r}
+dl %>% group_by(country) %>% select(Date) %>% table()
+
+dl %>% group_by(country) %>% select(country) %>% count()
+dl %>% group_by(country) %>% filter(country != 0) %>% select(country) %>% table()
 ```
 
 ```{r}
-dw <- dw %>% filter(missings != 20)
+#parttime job
+dl %>% select(job_parttime) %>% table()
 
-dw %>% select(missings) %>% table()
-dw %>% count()
+dl %>% group_by(id) %>% select(job_parttime)  
+dl %>% group_by(id) %>% filter(job_parttime > 0 & job_parttime < 1)  
+
+
+# fulltime job
+dl %>% select(job_fulltime) %>% table()
+
+dl %>% group_by(id) %>% select(job_fulltime)   
+
+#physical health
+
+#know corona
+dl %>% group_by(id) %>% select(know_corona)  
 ```
 
-## Mutate variables
+
+## Aggregate data
 ```{r}
-#dw %>% select(employstatus_1) %>% table()
-dw %>% select(PFS01) %>% table()
-dw %>% select(isoFriends_inPerson) %>% table()
-dw %>% select(isoOthPpl_inPerson) %>% table()
-dw %>% select(isoFriends_online) %>% table()
-dw %>% select(isoOthPpl_online) %>% table()
-dw %>% select(persRelSat) %>% table()
-dw %>% select(lone01) %>% table()
-dw %>% select(happy) %>% table()
-dw %>% select(coronaClose_1) %>% table()
-dw %>% select(houseLeave) %>% table()
-dw %>% select(neuro01) %>% table()
-
-dw %>% select(countryCitizen:representative) %>% skim()
-dw %>% select(respSetMean, respSetSd) %>% skim()
-
-dw %>% select(ConfirmedCases:StringencyIndex) %>% skim()
+df_id <- aggreg(dl, id, vars=c("id", "gender", "Age", "Edu","country", "countryCitizen","Citizen", "job_fulltime", "job_parttime" ,"happy", "friend_rl", "other_rl", 
+                                   "friend_online", "other_online", "rel_sat", "lonely", "ment_health", "PFS",
+                                   "phys_health", "leave_house", "neuroticism", "know_corona")
+                  )
+ 
+df_id %>% skim()
 ```
 
+```{r}
+# surveys per country
+dl %>% select(country) %>% table()
+
+# participants per country
+df_id %>% group_by(country) %>% filter(country != 0) %>% select(country) %>% table()
+```
+## Add country dummies
+```{r}
+dl <- dl %>% mutate(albania = ifelse(country == "Albania", 1, 0),
+              algeria = ifelse(country == "Algeria", 1, 0),
+              andorra = ifelse(country == "Andorra", 1, 0),
+              argentina = ifelse(country == "Argentina", 1, 0),
+              armenia = ifelse(country == "Armenia", 1, 0),
+              australia = ifelse(country == "Australia", 1, 0),
+              austria = ifelse(country == "Austria", 1, 0),
+              azerbaijan = ifelse(country == "Azerbaijan", 1, 0),
+              bahrain = ifelse(country == "Bahrain", 1, 0),
+              bangladesh = ifelse(country == "Bangladesh", 1, 0),
+              
+              belarus = ifelse(country == "Belarus", 1, 0),
+              belgium = ifelse(country == "Belgium", 1, 0),
+              benin = ifelse(country == "Benin", 1, 0),
+              bosnia = ifelse(country == "Bosnia and Herzegovina", 1, 0),
+              botswana = ifelse(country == "Botswana", 1, 0),
+              brazil = ifelse(country == "Brazil", 1, 0),
+              brunei = ifelse(country == "Brunei", 1, 0),
+              bulgaria = ifelse(country == "Bulgaria", 1, 0),
+              cambodia = ifelse(country == "Cambodia", 1, 0),
+              cameroon = ifelse(country == "Cameroon", 1, 0),
+              
+              canada = ifelse(country == "Canada", 1, 0),
+              chile = ifelse(country == "Chile", 1, 0),
+              china = ifelse(country == "China", 1, 0),
+              colombia = ifelse(country == "Colombia", 1, 0),
+              costa_rica = ifelse(country == "Costa Rica", 1, 0),
+              croatia = ifelse(country == "Croatia", 1, 0),
+              cyprus = ifelse(country == "Cyprus", 1, 0),
+              czech = ifelse(country == "Czech Republic", 1, 0),
+              denmark = ifelse(country == "Denmark", 1, 0),
+              dominican = ifelse(country == "Dominican Republic", 1, 0),
+              
+              ecuador = ifelse(country == "Ecuador", 1, 0),
+              egypt = ifelse(country == "Egypt", 1, 0),
+              el_salvador = ifelse(country == "El Salvador", 1, 0),
+              estonia = ifelse(country == "Estonia", 1, 0),
+              ethiopia = ifelse(country == "Ethiopia", 1, 0),
+              finland = ifelse(country == "Finland", 1, 0),
+              france = ifelse(country == "France", 1, 0),
+              georgia = ifelse(country == "Georgia", 1, 0),
+              germany = ifelse(country == "Germany", 1, 0),
+              greece = ifelse(country == "Greece", 1, 0),
+              
+              guatemala = ifelse(country == "Guatemala", 1, 0),
+              hong_kong = ifelse(country == "Hong Kong S.A.R.", 1, 0),
+              hungary = ifelse(country == "Hungary", 1, 0),
+              iceland = ifelse(country == "Iceland", 1, 0),
+              india = ifelse(country == "India", 1, 0),
+              indonesia = ifelse(country == "Indonesia", 1, 0),
+              iran = ifelse(country == "Iran", 1, 0),
+              iraq = ifelse(country == "Iraq", 1, 0),
+              ireland = ifelse(country == "Ireland", 1, 0),
+              israel = ifelse(country == "Israel", 1, 0),
+              
+              italy = ifelse(country == "Italy", 1, 0),
+              jamaica = ifelse(country == "Jamaica", 1, 0),
+              japan = ifelse(country == "Japan", 1, 0),
+              jordan = ifelse(country == "Jordan", 1, 0),
+              kazakhstan = ifelse(country == "Kazakhstan", 1, 0),
+              kenya = ifelse(country == "Kenya", 1, 0),
+              kosovo = ifelse(country == "Kosovo", 1, 0),
+              kuwait = ifelse(country == "Kuwait", 1, 0),
+              kyrgyzstan = ifelse(country == "Kyrgyzstan", 1, 0),
+              laos = ifelse(country == "Laos", 1, 0),
+              
+              latvia = ifelse(country == "Latvia", 1, 0),
+              lebanon = ifelse(country == "Lebanon", 1, 0),
+              libya = ifelse(country == "Libya", 1, 0),
+              lithuania = ifelse(country == "Lithuania", 1, 0),
+              luxembourg = ifelse(country == "Luxembourg", 1, 0),
+              malaysia = ifelse(country == "Malaysia", 1, 0),
+              mali = ifelse(country == "Mali", 1, 0),
+              malta = ifelse(country == "Malta", 1, 0),
+              mauritius = ifelse(country == "Mauritius", 1, 0),
+              mexico = ifelse(country == "Mexico", 1, 0),
+              
+              moldova = ifelse(country == "Moldova", 1, 0),
+              mongolia = ifelse(country == "Mongolia", 1, 0),
+              montenegro = ifelse(country == "Montenegro", 1, 0),
+              morocco = ifelse(country == "Morocco", 1, 0),
+              myanmar = ifelse(country == "Myanmar", 1, 0),
+              nepal = ifelse(country == "Nepal", 1, 0),
+              netherlands = ifelse(country == "Netherlands", 1, 0),
+              new_zealand = ifelse(country == "New Zealand", 1, 0),
+              nigeria = ifelse(country == "Nigeria", 1, 0),
+              norway = ifelse(country == "Norway", 1, 0),
+              
+              oman = ifelse(country == "Oman", 1, 0),
+              pakistan = ifelse(country == "Pakistan", 1, 0),
+              palestine = ifelse(country == "Palestine", 1, 0),
+              panama = ifelse(country == "Panama", 1, 0),
+              peru = ifelse(country == "Peru", 1, 0),
+              philippines = ifelse(country == "Philippines", 1, 0),
+              poland = ifelse(country == "Poland", 1, 0),
+              portugal = ifelse(country == "Portugal", 1, 0),
+              qatar = ifelse(country == "Qatar", 1, 0),
+              serbia = ifelse(country == "Republic of Serbia", 1, 0),
+              
+              romania = ifelse(country == "Romania", 1, 0),
+              russia = ifelse(country == "Russia", 1, 0),
+              saudi_arabia = ifelse(country == "Saudi Arabia", 1, 0),
+              singapore = ifelse(country == "Singapore", 1, 0),
+              slovakia = ifelse(country == "Slovakia", 1, 0),
+              slovenia = ifelse(country == "Slovenia", 1, 0),
+              south_africa = ifelse(country == "South Africa", 1, 0),
+              south_korea = ifelse(country == "South Korea", 1, 0),
+              spain = ifelse(country == "Spain", 1, 0),
+              sweden = ifelse(country == "Sweden", 1, 0),
+              
+              switzerland = ifelse(country == "Switzerland", 1, 0),
+              taiwan = ifelse(country == "Taiwan", 1, 0),
+              thailand = ifelse(country == "Thailand", 1, 0),
+              trinidad = ifelse(country == "Trinidad and Tobago", 1, 0),
+              tunisia = ifelse(country == "Tunisia", 1, 0),
+              turkey = ifelse(country == "Turkey", 1, 0),
+              ukraine = ifelse(country == "Ukraine", 1, 0),
+              emirates = ifelse(country == "United Arab Emirates", 1, 0),
+              united_kingdom = ifelse(country == "United Kingdom", 1, 0),
+              tanzania = ifelse(country == "United Republic of Tanzania", 1, 0),
+              
+              united_states = ifelse(country == "United States of America", 1, 0),
+              urugay = ifelse(country == "Urugay", 1, 0),
+              uzbekistan = ifelse(country == "Uzbekistan", 1, 0),
+              venezuela = ifelse(country == "Venezuela", 1, 0),
+              vietnam = ifelse(country == "Vietnam", 1, 0)
+              )
+```
