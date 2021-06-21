@@ -8,16 +8,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-install.packages("lcmm")
 library(lcmm)
 library(dplyr)
-install.packages("survival")
-install.packages("parallel")
 library(survival)
 library(parallel)
 ```
 
-
+Participanten selecteren met >20 ingevulde metingen
 ```{r}
 dl$id <- as.factor(dl$id)
 
@@ -34,7 +31,7 @@ dl_mini$days <- as.numeric(dl_mini$days)
 dl_mini <- as.data.frame(dl_mini)
 ```
 
-
+Modellen proberen met 2, 3 en 4 clusters
 ```{r}
 lcga1 <- hlme(happy ~ days, subject = "id", ng = 1, data = dl_mini) 
 
