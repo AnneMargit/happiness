@@ -1,7 +1,7 @@
 ---
 title: "Descriptives"
-author: "Anne Margit & Vera"
-date: "12-5-2021"
+author: "Vera"
+date: "28-4-2021"
 output: html_document
 ---
 ```{r setup, include=FALSE}
@@ -57,18 +57,13 @@ dl <- dl %>% rename(id = ID,
 ```{r}
 dl <- dl %>% mutate(gender = gender - 1,
                     neuroticism = (Neuro1 + Neuro2 + Neuro3)/3,
-                    job_24 = ifelse(!is.na(Emp1) == TRUE, 1, 0),
-                    job_39 = ifelse(!is.na(Emp2) == TRUE, 1, 0), 
-                    job_40 = ifelse(!is.na(Emp3) == TRUE, 1, 0),
-                    job_na = ifelse(is.na(Emp1) & is.na(Emp2) & is.na(Emp3) & is.na(Emp4) & is.na(Emp5) & is.na(Emp6) & is.na(Emp7) &
-                                    is.na(Emp8) & is.na(Emp9) & is.na(Emp10) & is.na(Emp11) & is.na(Emp12) & is.na(Emp13) & is.na(Emp14), 
-                                    1, 0),
-                    job_24 = ifelse(job_na == 1, NA, job_24),
-                    job_39 = ifelse(job_na == 1, NA, job_39), 
-                    job_40 = ifelse(job_na == 1, NA, job_40),
+                    job_parttime = ifelse(!is.na(Emp1) == TRUE, 1, 0),
+                    job_parttime = ifelse(!is.na(Emp2) == TRUE, 1, job_parttime), 
+                    job_fulltime = ifelse(!is.na(Emp3) == TRUE, 1, 0),
+                    job_parttime = ifelse(job_fulltime == 1, 0, job_parttime),
                     know_corona = ifelse(!is.na(CoronaClose6) == TRUE, 0, 1))
 
-dl %>% select(Emp1:Emp4, job_parttime, job_fulltime, job_24, job_39, job_40, job_na)
+#dl %>% select(Emp1:Emp4, job_parttime, job_fulltime)
 ```
 
 
@@ -84,11 +79,6 @@ dl <- dl %>% rename(liv_sit = ISO_Obj,
 #liv_alone is now coded 1 for living with someone
 dl$liv_sit[dl$liv_sit == "1"] <- "0"
 dl$liv_sit[dl$liv_sit == "2"] <- "1"
-
-#create variables for living with parents and living with others
-dl <- dl %>% mutate(liv_parent = ifelse((liv_mother == 1) | (liv_father == 1), 1, 0))
-                    
-dl %>% filter(!is.na(liv_sit)) %>% select(liv_sit, liv_mother, liv_father, liv_parent, liv_child, liv_house, liv_other)
 ```
 
 ## Check missings
@@ -201,6 +191,7 @@ dl %>% select(country) %>% table()
 df_id %>% group_by(country) %>% filter(country != 0) %>% select(country) %>% table()
 ```
 ## Add country dummies
+
 ```{r}
 dl <- dl %>% mutate(albania = ifelse(country == "Albania", 1, 0),
               algeria = ifelse(country == "Algeria", 1, 0),
@@ -330,3 +321,22 @@ dl <- dl %>% mutate(albania = ifelse(country == "Albania", 1, 0),
               vietnam = ifelse(country == "Vietnam", 1, 0)
               )
 ```
+
+## Data
+```{r}
+dl %>% select(country) %>% table()
+dl %>% group_by(id) %>% select(Emp1:Emp14) %>% skim()
+
+```
+
+
+
+
+```{r pressure, echo=FALSE}
+
+df %>% skim()
+
+df %>% 
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
