@@ -1,0 +1,54 @@
+---
+title: "Figures"
+author: "Vera"
+date: "21-6-2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, results = "hide"}
+library(ggplot2)
+library(tidyverse)
+library(skimr)
+```
+
+```{r read data, results = "hide"}
+dl 
+
+dl <- dl %>% mutate(days = as.numeric(days))
+
+dl %>% select(days) %>% skim()
+```
+
+```{r}
+dl %>% group_by(days) %>% select(happy)
+
+fig <- dl %>% filter(!is.na(happy))
+
+fig1 <- aggregate(fig$happy, list(fig$days), mean, na.action = na.omit)
+fig1 <- fig1 %>% rename(day = Group.1, happy = x)
+
+fig %>% select(days, happy, id) %>% skim()
+fig1 %>% skim()
+
+
+ggplot(fig1, aes(day, happy)) + geom_point() + geom_smooth()
+```
+
+```{r}
+dl <- dl %>% mutate(wave_num = as.numeric(Wave) - 1) 
+
+fig <- dl %>% filter(!is.na(happy))
+
+fig2 <- aggregate(fig$happy, list(fig$wave_num), mean, na.action = na.omit)
+fig2 <- fig2 %>% rename(wave = Group.1, happy = x)
+
+fig %>% select(days, wave_num, happy, id) %>% skim()
+fig2 %>% skim()
+
+ggplot(fig2, aes(wave, happy)) + geom_point() + geom_smooth()
+```
+
