@@ -18,7 +18,7 @@ library(skimr)
 ```{r read data, results = "hide"}
 dl 
 
-dl <- dl %>% mutate(as.numeric(days))
+dl <- dl %>% mutate(days = as.numeric(days))
 
 dl %>% select(days) %>% skim()
 ```
@@ -36,7 +36,19 @@ fig1 %>% skim()
 
 
 ggplot(fig1, aes(day, happy)) + geom_point() + geom_smooth()
+```
 
-dl %>% aggregate(happy, days)
+```{r}
+dl <- dl %>% mutate(wave_num = as.numeric(Wave) - 1) 
+
+fig <- dl %>% filter(!is.na(happy))
+
+fig2 <- aggregate(fig$happy, list(fig$wave_num), mean, na.action = na.omit)
+fig2 <- fig2 %>% rename(wave = Group.1, happy = x)
+
+fig %>% select(days, wave_num, happy, id) %>% skim()
+fig2 %>% skim()
+
+ggplot(fig2, aes(wave, happy)) + geom_point() + geom_smooth()
 ```
 
