@@ -13,18 +13,19 @@ knitr::opts_chunk$set(echo = TRUE)
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
 ## Load packages
-```{r}
+```{r }
+# to load data
+library(readr) 
+
+# to skim data
 library(skimr)
+
+# to use data pipes
 library(tidyverse)
-library(readr)
 
+# to aggregate data
 #remotes::install_github("wviechtb/esmpack")
-library(esmpack)
-
-library(dplyr)
-library(tidyr)
-library(anytime)
-library(arsenal)
+library(esmpack) 
 ```
 
 ## Load data
@@ -38,6 +39,11 @@ dl <- data_long_str
 ## Rename variables
 ```{r}
 dl <- dl %>% rename(id = ID, 
+                    date = Date,
+                    age = Age,
+                    edu = Edu,
+                    country_citizen = countryCitizen,
+                    citizen = Citizen,
                     wave = Wave,
                     gender = Gender,
                     country = Country,
@@ -52,9 +58,7 @@ dl <- dl %>% rename(id = ID,
                     happy = Happy, 
                     leave_house = HouseLeave, 
                     stringency = StringencyIndex)
-```
 
-```{r}
 dl <- dl %>% mutate(gender = gender - 1,
                     neuroticism = (Neuro1 + Neuro2 + Neuro3)/3,
                     job_24 = ifelse(!is.na(Emp1) == TRUE, 1, 0),
@@ -68,11 +72,9 @@ dl <- dl %>% mutate(gender = gender - 1,
                     job_40 = ifelse(job_na == 1, NA, job_40),
                     know_corona = ifelse(!is.na(CoronaClose6) == TRUE, 0, 1))
 
-dl %>% select(Emp1:Emp4, job_parttime, job_fulltime, job_24, job_39, job_40, job_na)
-```
+#check variables
+dl %>% select(gender, neuroticism, job_24, Emp1, job_39, Emp2, job_40, Emp3, job_na, know_corona)
 
-
-```{r}
 dl <- dl %>% rename(liv_sit = ISO_Obj,
                     liv_spouse = ISO_Obj_who1,
                     liv_mother = ISO_Obj_who2,
@@ -88,104 +90,40 @@ dl$liv_sit[dl$liv_sit == "2"] <- "1"
 #create variables for living with parents and living with others
 dl <- dl %>% mutate(liv_parent = ifelse((liv_mother == 1) | (liv_father == 1), 1, 0))
                     
-dl %>% filter(!is.na(liv_sit)) %>% select(liv_sit, liv_mother, liv_father, liv_parent, liv_child, liv_house, liv_other)
-```
-
-## Check missings
-```{r}
-# check number of NA's
-dl %>% filter(!is.na(Date))
-
-## select only rows with Recorded date
-dl <- dl %>% filter(!is.na(Date))
-
-# check number of responses per wave
-dl %>% filter(!is.na(Date)) %>% select(wave) %>% table()
-
-# check number of responses for happiness per wave
-dl %>% filter(!is.na(happy)) %>% select(wave) %>% table()
-```
-
-## First date
-```{r}
-min(dl$Date)
+#check living situation
+dl %>% filter(!is.na(liv_sit)) %>% select(liv_sit, liv_mother, liv_father, liv_parent, liv_spouse, liv_child, liv_house, liv_other)
 ```
 
 ## Add difference in days between current date and 2020-03-19
 ```{r}
+# select only rows with Recorded date
+dc <- dl  %>% filter(!is.na(date))
+
+#check first date
+min(dc$date)
+
 mindate <- as.Date("2020-03-19")
 
 dl <- dl %>%
-  arrange(Date)%>%
-  mutate(days = difftime(Date, mindate, units="days"))
+  arrange(date)%>%
+  mutate(days = difftime(date, mindate, units="days"))
+
+dl %>% count(days)
 ```
 
-## Dates per wave
+## remove old variables
 ```{r}
-dl %>% filter(wave == "w0") %>% select(Date) %>% table()
-
-dl %>% filter(wave == "w1") %>% select(Date) %>% table()
-dl %>% filter(wave == "w2") %>% select(Date) %>% table()
-dl %>% filter(wave == "w3") %>% select(Date) %>% table()
-
-dl %>% filter(wave == "w4") %>% select(Date) %>% table()
-dl %>% filter(wave == "w5") %>% select(Date) %>% table()
-
-dl %>% filter(wave == "w6") %>% select(Date) %>% table()
-dl %>% filter(wave == "w7") %>% select(Date) %>% table()
-
-dl %>% filter(wave == "w8") %>% select(Date) %>% table()
-dl %>% filter(wave == "w9") %>% select(Date) %>% table()
-
-dl %>% filter(wave == "w10") %>% select(Date) %>% table()
-dl %>% filter(wave == "w11") %>% select(Date) %>% table()
-dl %>% filter(wave == "w12") %>% select(Date) %>% table()
-dl %>% filter(wave == "w13") %>% select(Date) %>% table()
-dl %>% filter(wave == "w14") %>% select(Date) %>% table()
-dl %>% filter(wave == "w15") %>% select(Date) %>% table()
-dl %>% filter(wave == "w16") %>% select(Date) %>% table()
-dl %>% filter(wave == "w17") %>% select(Date) %>% table()
-dl %>% filter(wave == "w18") %>% select(Date) %>% table()
-dl %>% filter(wave == "w19") %>% select(Date) %>% table()
-dl %>% filter(wave == "w20") %>% select(Date) %>% table()
+dl <- subset(dl, select = -c(Emp1:Emp14))
 ```
 
-## Descriptives overall uncontrolled
+## Save data (only once!)
 ```{r}
-dl %>% skim("id", "gender", "Age", "country", "happy", "friend_rl", "other_rl", 
-                                   "friend_online", "other_online", "rel_sat", "lonely", "ment_health", "PFS", 
-                                   "phys_health", "leave_house", "neuroticism", "stringency", "know_corona", "ISO_Obj")
+#save(dl, file= "dl.Rdata")
 ```
-```{r}
-dl %>% group_by(country) %>% select(Date) %>% table()
-
-dl %>% group_by(country) %>% select(country) %>% count()
-dl %>% group_by(country) %>% filter(country != 0) %>% select(country) %>% table()
-```
-
-```{r}
-#parttime job
-dl %>% select(job_parttime) %>% table()
-
-dl %>% group_by(id) %>% select(job_parttime)  
-dl %>% group_by(id) %>% filter(job_parttime > 0 & job_parttime < 1)  
-
-
-# fulltime job
-dl %>% select(job_fulltime) %>% table()
-
-dl %>% group_by(id) %>% select(job_fulltime)   
-
-#physical health
-
-#know corona
-dl %>% group_by(id) %>% select(know_corona)  
-```
-
 
 ## Aggregate data
 ```{r}
-df_id <- aggreg(dl, id, vars=c("id", "gender", "Age", "Edu","country", "countryCitizen","Citizen", "job_fulltime", "job_parttime" ,"happy", "friend_rl", "other_rl", 
+df_id <- aggreg(dl, id, vars=c("id", "gender", "age", "edu","country", "country_citizen","citizen", "job_24", "job_39", "job_40","happy", "friend_rl", "other_rl", 
                                    "friend_online", "other_online", "rel_sat", "lonely", "ment_health", "PFS",
                                    "phys_health", "leave_house", "neuroticism", "know_corona")
                   )
@@ -193,13 +131,12 @@ df_id <- aggreg(dl, id, vars=c("id", "gender", "Age", "Edu","country", "countryC
 df_id %>% skim()
 ```
 
+## Save data (only once!)
 ```{r}
-# surveys per country
-dl %>% select(country) %>% table()
-
-# participants per country
-df_id %>% group_by(country) %>% filter(country != 0) %>% select(country) %>% table()
+#save(df_id, file= "df_id.Rdata")
 ```
+
+
 ## Add country dummies
 ```{r}
 dl <- dl %>% mutate(albania = ifelse(country == "Albania", 1, 0),
