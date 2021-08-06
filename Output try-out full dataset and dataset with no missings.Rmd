@@ -1,0 +1,61 @@
+---
+title: "Output try-out full dataset and dataset with no missings"
+author: "Anne Margit"
+date: "08/06/2021"
+output: github_document
+---
+
+> Participants with 3 completed assessments or more 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(lcmm)
+library(dplyr)
+library(survival)
+library(parallel)
+```
+
+```{r}
+load("lcga1.Rdata")
+load("lcga2.Rdata")
+load("lcga3.Rdata")
+load("lcga4.Rdata")
+load("lcga5.Rdata")
+```
+
+```{r}
+summarytable(lcga1, lcga2, lcga3, lcga4,lcga5)
+
+summary(lcga2)
+
+summary(lcga3)
+
+summary(lcga4)
+
+summary(lcga5)
+```
+
+> Participants with >20 completed assessments 
+
+```{r}
+load("lcga1_nomiss.Rdata")
+load("lcga2_nomiss.Rdata")
+load("lcga3_nomiss.Rdata")
+load("lcga4_nomiss.Rdata")
+load("lcga5_nomiss.Rdata")
+```
+
+```{r}
+summarytable(lcga1_nomiss, lcga2_nomiss, lcga3_nomiss, lcga4_nomiss,lcga5_nomiss)
+
+summary(lcga2_nomiss)
+
+summary(lcga3_nomiss)
+
+summary(lcga4_nomiss)
+
+summary(lcga5_nomiss)
+```

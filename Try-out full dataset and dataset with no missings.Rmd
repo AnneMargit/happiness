@@ -1,0 +1,124 @@
+---
+title: "Try-out full dataset and dataset with no missings"
+author: "Anne Margit"
+date: "08/06/2021"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(lcmm)
+library(dplyr)
+library(survival)
+library(parallel)
+```
+
+```{r}
+load("dl.Rdata")
+```
+
+
+```{r}
+dl$id <- as.numeric(dl$id)
+dl$days <- as.numeric(dl$days)
+
+dl <- as.data.frame(dl)
+```
+
+Select participants with >2 measurements (= baseline + 2) 
+```{r}
+dl$id <- as.factor(dl$id)
+dl2 <- dl %>%
+  group_by(id) %>%
+  add_tally(wt = !is.na(Date))
+dl_mini <- dl2 %>%
+  filter(n > 2)
+dl_mini$id <- as.numeric(dl_mini$id)
+dl_mini$days <- as.numeric(dl_mini$days)
+dl_mini <- as.data.frame(dl_mini)
+```
+
+Trying out models with 2, 3, 4, 5 clusters
+```{r}
+lcga1 <- hlme(happy ~ days, subject = "id", ng = 1, data = dl_mini) 
+lcga2 <- gridsearch(rep = 100, maxiter = 10, minit = lcga1,
+                    hlme(happy ~ days, subject = "id",
+                         ng = 2, data = dl_mini, mixture = ~ days)) 
+lcga3 <- gridsearch(rep = 100, maxiter = 10, minit = lcga1,
+                    hlme(happy ~ days, subject = "id",
+                         ng = 3, data = dl_mini, mixture = ~ days))
+lcga4 <- gridsearch(rep = 100, maxiter = 10, minit = lcga1,
+                    hlme(happy ~ days, subject = "id",
+                         ng = 4, data = dl_mini, mixture = ~ days))
+lcga5 <- gridsearch(rep = 100, maxiter = 10, minit = lcga1,
+                    hlme(happy ~ days, subject = "id",
+                         ng = 5, data = dl_mini, mixture = ~ days))
+
+```
+```{r}
+save(lcga1, file = "lcga1.Rdata")
+save(lcga2, file = "lcga2.Rdata")
+save(lcga3, file = "lcga3.Rdata")
+save(lcga4, file = "lcga4.Rdata")
+save(lcga5, file = "lcga5.Rdata")
+
+```
+
+```{r}
+summarytable(lcga1, lcga2, lcga3, lcga4, lcga5)
+
+summary(lcga3)
+
+summary(lcga4)
+
+summary(lcga5)
+```
+
+Select participants with >20 measurements (= baseline + 19) 
+```{r}
+dl_mini <- dl2 %>%
+  filter(n > 20)
+dl_mini$id <- as.numeric(dl_mini$id)
+dl_mini$days <- as.numeric(dl_mini$days)
+dl_mini <- as.data.frame(dl_mini)
+```
+
+Trying out models with 2, 3, 4, 5 clusters
+```{r}
+lcga1_nomiss <- hlme(happy ~ days, subject = "id", ng = 1, data = dl_mini) 
+lcga2_nomiss <- gridsearch(rep = 100, maxiter = 10, minit = lcga1,
+                    hlme(happy ~ days, subject = "id",
+                         ng = 2, data = dl_mini, mixture = ~ days)) 
+lcga3_nomiss <- gridsearch(rep = 100, maxiter = 10, minit = lcga1,
+                    hlme(happy ~ days, subject = "id",
+                         ng = 3, data = dl_mini, mixture = ~ days))
+lcga4_nomiss <- gridsearch(rep = 100, maxiter = 10, minit = lcga1,
+                    hlme(happy ~ days, subject = "id",
+                         ng = 4, data = dl_mini, mixture = ~ days))
+lcga5_nomiss <- gridsearch(rep = 100, maxiter = 10, minit = lcga1,
+                    hlme(happy ~ days, subject = "id",
+                         ng = 5, data = dl_mini, mixture = ~ days))
+
+```
+
+```{r}
+save(lcga1_nomiss, file = "lcga1_nomiss.Rdata")
+save(lcga2_nomiss, file = "lcga2_nomiss.Rdata")
+save(lcga3_nomiss, file = "lcga3_nomiss.Rdata")
+save(lcga4_nomiss, file = "lcga4_nomiss.Rdata")
+save(lcga5_nomiss, file = "lcga5_nomiss.Rdata")
+
+```
+
+```{r}
+summarytable(lcga1_nomiss, lcga2_nomiss, lcga3_nomiss, lcga4_nomiss, lcga5_nomiss)
+
+summary(lcga3_nomiss)
+
+summary(lcga4_nomiss)
+
+summary(lcga5_nomiss)
+```
