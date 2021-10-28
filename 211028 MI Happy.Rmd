@@ -1,0 +1,47 @@
+---
+title: "211028 MI Happy"
+author: "Anne Margit"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(lcmm)
+library(dplyr)
+library(survival)
+library(parallel)
+library(mice)
+library(tidyr)
+library(skimr)
+library(miceadds)
+```
+
+
+```{r}
+load("dl_mini_miss_happy.Rdata")
+```
+
+Impute happy only 
+```{r}
+imp <- mice(dl_mini_miss_happy, maxit=0)
+
+pred <- imp$pred
+pred[,"id"] <- -2
+pred[,"happy"] <- 2
+pred[,c(2:36)] <- 0
+pred[,c(38:59)] <- 0
+
+imp1 <- mice(dl_mini_miss_happy, m=5, maxit=10,  meth = "2l.lmer", pred = pred, print = FALSE)
+
+imp_data <- complete(imp1)
+
+summary(dl_mini_miss_happy$happy)
+summary(imp_data$happy)
+
+hist(dl_mini_miss_happy$happy)
+hist(imp_data$happy)
+
+```
